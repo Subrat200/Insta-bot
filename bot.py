@@ -1,10 +1,34 @@
 import os
 import logging
+import requests
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from instagram import InstagramScraper
 
 logging.basicConfig(level=logging.INFO)
-scraper = InstagramScraper()
+
+def get_instagram(username):
+    try:
+        s = requests.Session()
+        s.headers["User-Agent"] = "Mozilla/5.0"
+        s.headers["X-IG-App-ID"] = "936619743392459"
+        r = s.get(
+            f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}",
+            timeout=15
+        )
+        u = r.json().get("data", {}).get("user", {})
+        if not u:
+            return None
+        return {
+            "username": u.get("username", ""),
+            "full_name": u.get("full_name", ""),
+            "bio": u.get("biography", ""),
+            "followers": u.get("edge_followed_by", {}).get("count", 0),
+            "following": u.get("edge_follow", {}).get("count", 0),
+            "posts": u.get("edge_owner_to_timeline_media", {}).get("count", 0),
+            "is_verified": u.get("is_verified", False),
+            "is_private": u.get("is_private", False),
+        }
+    except:
+        return None
 
 def start(update, context):
     update.message.reply_text(
@@ -16,9 +40,9 @@ def start(update, context):
 def handle(update, context):
     username = update.message.text.strip().lstrip("@")
     msg = update.message.reply_text(f"🔍 Searching @{username}...")
-    data = scraper.get_profile(username)
-    if data.get("error"):
-        msg.edit_text(f"❌ {data['error']}")
+    data = get_instagram(username)
+    if not data:
+        msg.edit_text("❌ Profile not found!")
         return
     text = (
         f"👤 @{data['username']}\n"
