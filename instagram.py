@@ -4,7 +4,7 @@ class InstagramScraper:
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
-            "User-Agent": "Mozilla/5.0",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             "X-IG-App-ID": "936619743392459",
         })
 
